@@ -277,16 +277,44 @@
 }
 
 // Check if the account has permission to download
+// And yea, it has permission to download ANYWAY!
 - (BOOL)checkAccessWithDialog:(BOOL)show {
-    // for now
-    BOOL accessible = [BaseAuthenticator.current.authData[@"username"] hasPrefix:@"Demo."] || BaseAuthenticator.current.authData[@"xboxGamertag"] != nil;
-    if (!accessible) {
-        [self.progress cancel];
-        if (show) {
-            [self finishDownloadWithErrorString:@"Minecraft can't be legally installed when logged in with a local account. Please switch to an online account to continue."];
-        }
-    }
+    
+//      Here we goooooooo!!
+//      Here we goooooooo!!
+//      Here we goooooooo!!
+//      Here we goooooooo!!
+//      Here we goooooooo!!
+    
+    
+    // destroy \\.Demo\\ mode
+    
+//    BOOL accessible = [BaseAuthenticator.current.authData[@"username"] hasPrefix:@"Demo."] || BaseAuthenticator.current.authData[@"xboxGamertag"] != nil;
+    
+    // make \\accessible\\ always true
+    
+    BOOL accessible = true;
+    
+    // unblock offline account usage
+    
+//    if (!accessible) {
+//        [self.progress cancel];
+//        if (show) {
+//            [self finishDownloadWithErrorString:@"Minecraft can't be legally installed when logged in with a local account. Please switch to an online account to continue."];
+//        }
+//    }
+    
+    
+    //      Successfully bypassed all restrictons!!!
+    //      Successfully bypassed all restrictons!!!
+    //      Successfully bypassed all restrictons!!!
+    //      CRACKED!!!
+            
+            
     return accessible;
+    
+    // Cracked by untether for ReJail.
+    // Thanks ******5588 for bulling me and being awesome!
 }
 
 // Check SHA of the file
