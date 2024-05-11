@@ -1,7 +1,7 @@
 # PojavLauncher for iOS
 [![Development build](https://github.com/PojavLauncherTeam/PojavLauncher_iOS/actions/workflows/development.yml/badge.svg?branch=main)](https://github.com/PojavLauncherTeam/PojavLauncher_iOS/actions/workflows/development.yml)
 [![Crowdin](https://badges.crowdin.net/pojavlauncher/localized.svg)](https://crowdin.com/project/pojavlauncher)
-[![Discord](https://img.shields.io/discord/724163890803638273.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/pojavlauncher-724163890803638273)
+
 
 
 
@@ -11,17 +11,16 @@ PojavLauncher is a Minecraft: Java Edition launcher for Android, iOS, and iPadOS
 * Supports Forge, Fabric, OptiFine, and Quilt for you to customize the experience with supported mods.
 * Includes customizable on-screen controls, keyboard and mouse support, and game controller support.
 * Optimized for jailbroken and TrollStore devices to enable better capabilities.
-* Microsoft account and demo mode support for logging into Minecraft.
+* Disabled Demo mode and allowed to download versions without Microsoft account!
 * ...and much more!
 
-This repository contains the code for our iOS and iPadOS port of PojavLauncher. Looking for [Android?](https://github.com/PojavLauncherTeam/PojavLauncher)
+This repository contains the code for our iOS and iPadOS port of PojavLauncher. I FUCK android!!!
 
-## Getting started with PojavLauncher
-The [PojavLauncher Website](https://pojavlauncherteam.github.io/INSTALL.html#ios) has extensive documentation on how to install, set up, and play! For those who wish to install quickly, here's the basics:
 
 ### Requirements
 At the minimum, you'll need one of the following devices on **iOS 14.0** and later:
-- iPhone 6s and later
+- iPhone 6s
+- iPhone SE:)
 - iPad (5th generation) and later
 - iPad Air (2nd generation) and later
 - iPad mini (4th generation) and later
@@ -29,7 +28,7 @@ At the minimum, you'll need one of the following devices on **iOS 14.0** and lat
 - iPod touch (7th generation)
 
 However, we recommend one of the following devices on **iOS 14.0** and later:
-- iPhone XS and later, excluding iPhone XR and iPhone SE (2nd generation)
+- iPhone XS and later
 - iPad (10th generation) and later
 - iPad Air (4th generation) and later
 - iPad mini (6th generation) and later
@@ -51,10 +50,6 @@ If you cannot, [AltStore](https://altstore.io) and [SideStore](https://sidestore
 #### Release build (TrollStore)
 1. Download an IPA of PojavLauncher in [Releases](https://github.com/PojavLauncherTeam/PojavLauncher_iOS/releases).
 2. Open the package in TrollStore using the share menu.
-
-#### Release build (AltStore/SideStore trusted source)
-1. Add `PojavLauncher Repository` from the Trusted Sources menu.
-2. Tap `FREE` to begin installing.
 
 #### Nightly builds
 *These builds can contain game-breaking bugs. Use with caution.*
@@ -81,6 +76,7 @@ PojavLauncher is amazing, and surprisingly stable, and it wouldn't be this way w
 @zhuowei  
 @jkcoxson   
 @Diatrus 
+@ghh-jb
 
 ## Third party components and their licenses
 - [Caciocavallo](https://github.com/PojavLauncherTeam/caciocavallo): [GNU GPLv2 License](https://github.com/PojavLauncherTeam/caciocavallo/blob/master/LICENSE).
