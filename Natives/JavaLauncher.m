@@ -215,7 +215,7 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
             // В случае отсутствия файла, показываем сообщение, но продолжаем запуск
             // Синхронная загрузка при запуске может вызвать проблемы
             NSLog(@"[JavaLauncher] Warning: authlib-injector not found for Ely.by account");
-            showDialog(localize(@"Warning", nil), localize(@"login.elyby.download_error", nil));
+            showDialog(localize(@"Warning", nil), localize(@"login.elyby.missing_authlib", nil));
             // Загрузим для следующего запуска
             [ElyAuthenticator downloadLatestAuthlibInjector:^(BOOL success, NSString *message) {
                 if (success) {
