@@ -88,6 +88,18 @@
 "login.option.elyby" = "Учётная запись Ely.by";
 "login.option.local" = "Локальная учётная запись";
 
+// Ely.by authentication
+"login.elyby.error.format" = "Неверный формат имени пользователя и пароля. Используйте формат имя:пароль";
+"login.elyby.error.unknown" = "Неизвестная ошибка";
+"login.elyby.error.no_token" = "Нет токена для обновления";
+"login.elyby.error.directory" = "Не удалось создать директорию: %@";
+"login.elyby.error.download" = "Ошибка загрузки: %@";
+"login.elyby.error.save" = "Файл не был сохранён после загрузки";
+"login.elyby.authlib_exists" = "Уже существует";
+"login.elyby.download_success" = "Успешно загружен";
+"login.elyby.missing_authlib" = "authlib-injector отсутствует. Он будет загружен для следующего запуска. Игра может работать некорректно в текущей сессии.";
+"Warning" = "Предупреждение";
+
 "login.warn.title.legacy_device" = "Следующая версия Amethyst не будет работать на вашем устройстве.";
 "login.warn.message.legacy_device" = "Для запуска следующего крупного обновления потребуется устройство под управлением iOS 14.";
 "login.warn.title.legacy_ios" = "Следующая версия Amethyst потребует обновления системы.";

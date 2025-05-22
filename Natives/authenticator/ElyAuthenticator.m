@@ -28,7 +28,7 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
     
     NSRange separatorRange = [input rangeOfString:@":"];
     if (separatorRange.location == NSNotFound) {
-        callback(@"Invalid username and password format. Use username:password", NO);
+        callback(localize(@"login.elyby.error.format", nil), NO);
         return;
     }
     
@@ -62,7 +62,17 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
         self.authData[@"oldusername"] = self.authData[@"username"];
         self.authData[@"isElyby"] = @YES;
         
-        // Скачиваем authlib-injector
+        // Generate profile pic URL for Ely.by accounts
+        // Use Crafatar as a fallback skin renderer with the user's UUID
+        NSString *uuid = responseObject[@"selectedProfile"][@"id"];
+        if (uuid) {
+            self.authData[@"profilePicURL"] = [NSString stringWithFormat:@"https://crafatar.com/avatars/%@?size=120&overlay", uuid];
+        } else {
+            // If UUID is unavailable, use a default image
+            self.authData[@"profilePicURL"] = @"https://crafatar.com/avatars/steve?size=120";
+        }
+        
+        // Download authlib-injector
         [ElyAuthenticator downloadLatestAuthlibInjector:^(BOOL success, NSString *message) {
             if (!success) {
                 NSLog(@"[ElyAuthenticator] Warning: Failed to download authlib-injector: %@", message);
@@ -75,7 +85,7 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
         }];
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         NSData *errorData = error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey];
-        NSString *errorMessage = @"Неизвестная ошибка";
+        NSString *errorMessage = localize(@"login.elyby.error.unknown", nil);
         
         if (errorData) {
             NSDictionary *serializedData = [NSJSONSerialization JSONObjectWithData:errorData options:0 error:nil];
@@ -90,7 +100,7 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
 
 - (void)refreshTokenWithCallback:(Callback)callback {
     if (self.authData[@"clientToken"] == nil || self.authData[@"accessToken"] == nil) {
-        callback(@"No token to refresh", NO);
+        callback(localize(@"login.elyby.error.no_token", nil), NO);
         return;
     }
     
@@ -111,13 +121,13 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
           success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
         self.authData[@"accessToken"] = responseObject[@"accessToken"];
-        // clientToken должен остаться прежним
+        // clientToken should remain the same
         
         [self saveChanges];
         callback(self.authData, YES);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         NSData *errorData = error.userInfo[AFNetworkingOperationFailingURLResponseDataErrorKey];
-        NSString *errorMessage = @"Неизвестная ошибка";
+        NSString *errorMessage = localize(@"login.elyby.error.unknown", nil);
         
         if (errorData) {
             NSDictionary *serializedData = [NSJSONSerialization JSONObjectWithData:errorData options:0 error:nil];
@@ -134,14 +144,14 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
     NSString *authlibPath = [self getAuthlibInjectorPath];
     NSString *authlibDir = [authlibPath stringByDeletingLastPathComponent];
     
-    // Проверим, существует ли уже authlib-injector
+    // Check if authlib-injector already exists
     if ([[NSFileManager defaultManager] fileExistsAtPath:authlibPath]) {
         NSLog(@"[ElyAuthenticator] authlib-injector already exists, skipping download");
-        if (callback) callback(YES, @"Already exists");
+        if (callback) callback(YES, localize(@"login.elyby.authlib_exists", nil));
         return;
     }
     
-    // Создаем директорию для authlib-injector если не существует
+    // Create directory for authlib-injector if it doesn't exist
     NSError *error;
     if (![[NSFileManager defaultManager] fileExistsAtPath:authlibDir]) {
         [[NSFileManager defaultManager] createDirectoryAtPath:authlibDir
@@ -150,14 +160,14 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
                                                         error:&error];
         if (error) {
             NSLog(@"[ElyAuthenticator] Failed to create directory: %@", error.localizedDescription);
-            if (callback) callback(NO, [NSString stringWithFormat:@"Не удалось создать директорию: %@", error.localizedDescription]);
+            if (callback) callback(NO, [NSString stringWithFormat:localize(@"login.elyby.error.directory", nil), error.localizedDescription]);
             return;
         }
     }
     
     NSLog(@"[ElyAuthenticator] Downloading authlib-injector from %@", authlibInjectorURL);
     
-    // Скачиваем authlib-injector из GitHub
+    // Download authlib-injector from GitHub
     NSURLSessionConfiguration *configuration = [NSURLSessionConfiguration defaultSessionConfiguration];
     AFURLSessionManager *manager = [[AFURLSessionManager alloc] initWithSessionConfiguration:configuration];
     
@@ -171,13 +181,13 @@ static NSString *authlibInjectorURL = @"https://github.com/yushijinhun/authlib-i
     } completionHandler:^(NSURLResponse *response, NSURL *filePath, NSError *error) {
         if (error) {
             NSLog(@"[ElyAuthenticator] Download error: %@", error.localizedDescription);
-            if (callback) callback(NO, [NSString stringWithFormat:@"Ошибка загрузки: %@", error.localizedDescription]);
+            if (callback) callback(NO, [NSString stringWithFormat:localize(@"login.elyby.error.download", nil), error.localizedDescription]);
         } else {
             NSLog(@"[ElyAuthenticator] Download complete: %@", filePath.path);
             if ([[NSFileManager defaultManager] fileExistsAtPath:authlibPath]) {
-                if (callback) callback(YES, @"Успешно загружен");
+                if (callback) callback(YES, localize(@"login.elyby.download_success", nil));
             } else {
-                if (callback) callback(NO, @"Файл не был сохранён после загрузки");
+                if (callback) callback(NO, localize(@"login.elyby.error.save", nil));
             }
         }
     }];

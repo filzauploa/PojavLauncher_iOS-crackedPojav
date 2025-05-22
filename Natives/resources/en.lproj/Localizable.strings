@@ -101,6 +101,18 @@
 "login.option.elyby" = "Ely.by account";
 "login.option.local" = "Local account";
 
+// Ely.by authentication
+"login.elyby.error.format" = "Invalid username and password format. Use username:password";
+"login.elyby.error.unknown" = "Unknown error";
+"login.elyby.error.no_token" = "No token to refresh";
+"login.elyby.error.directory" = "Could not create directory: %@";
+"login.elyby.error.download" = "Download error: %@";
+"login.elyby.error.save" = "File was not saved after download";
+"login.elyby.authlib_exists" = "Already exists";
+"login.elyby.download_success" = "Successfully downloaded";
+"login.elyby.missing_authlib" = "authlib-injector is missing. It will be downloaded for the next launch. The game may not work correctly in this session.";
+"Warning" = "Warning";
+
 "login.warn.title.legacy_device" = "The next release of Amethyst will not be compatible with this device.";
 "login.warn.message.legacy_device" = "To run the next major release, a device capable of running iOS 14 is required.";
 "login.warn.title.legacy_ios" = "The next release of Amethyst will require a system update.";
