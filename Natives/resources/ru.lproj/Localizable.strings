@@ -85,6 +85,7 @@
 "login.option.select" = "Учётные записи";
 "login.option.demo" = "Демонстрационный режим";
 "login.option.microsoft" = "Учётная запись Microsoft";
+"login.option.elyby" = "Учётная запись Ely.by";
 "login.option.local" = "Локальная учётная запись";
 
 "login.warn.title.legacy_device" = "Следующая версия Amethyst не будет работать на вашем устройстве.";
@@ -245,3 +246,12 @@
 
 "controller_configurator.section.config_files" = "Текущий файл настроек";
 "controller_configurator.section.controller_style" = "Тип контроллера";
+
+"login.elyby.title" = "Вход в Ely.by";
+"login.elyby.message" = "Введите логин и пароль от вашего аккаунта Ely.by";
+"login.elyby.username" = "Логин";
+"login.elyby.password" = "Пароль";
+"login.elyby.error.empty" = "Логин и пароль не могут быть пустыми";
+"login.elyby.error" = "Ошибка входа в Ely.by";
+"login.elyby.download_error" = "Не удалось загрузить authlib-injector: %@";
+"login.elyby.missing_authlib" = "Отсутствует authlib-injector. Он будет загружен для следующего запуска. Некоторые функции могут работать некорректно.";

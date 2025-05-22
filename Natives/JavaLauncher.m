@@ -15,6 +15,7 @@
 #import "JavaLauncher.h"
 #import "LauncherPreferences.h"
 #import "PLProfiles.h"
+#import "authenticator/ElyAuthenticator.h"
 
 #define fm NSFileManager.defaultManager
 
@@ -202,6 +203,28 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/patchjna_agent.jar=", librariesPath].UTF8String;
     if(getPrefBool(@"general.cosmetica")) {
         margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/arc_dns_injector.jar=23.95.137.176", librariesPath].UTF8String;
+    }
+    
+    // Добавляем authlib-injector для Ely.by, если это аккаунт Ely.by
+    if (BaseAuthenticator.current.authData[@"isElyby"] != nil && [BaseAuthenticator.current.authData[@"isElyby"] boolValue]) {
+        NSString *authlibPath = [ElyAuthenticator getAuthlibInjectorPath];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:authlibPath]) {
+            margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@=ely.by", authlibPath].UTF8String;
+            NSLog(@"[JavaLauncher] authlib-injector added for Ely.by");
+        } else {
+            // В случае отсутствия файла, показываем сообщение, но продолжаем запуск
+            // Синхронная загрузка при запуске может вызвать проблемы
+            NSLog(@"[JavaLauncher] Warning: authlib-injector not found for Ely.by account");
+            showDialog(localize(@"Warning", nil), localize(@"login.elyby.download_error", nil));
+            // Загрузим для следующего запуска
+            [ElyAuthenticator downloadLatestAuthlibInjector:^(BOOL success, NSString *message) {
+                if (success) {
+                    NSLog(@"[JavaLauncher] Successfully downloaded authlib-injector for Ely.by for next launch");
+                } else {
+                    NSLog(@"[JavaLauncher] Error downloading authlib-injector: %@", message);
+                }
+            }];
+        }
     }
 
     // Workaround random stack guard allocation crashes
