@@ -18,14 +18,8 @@ jobs:
         include:
           - platform: 2
             platform_name: ios
-          - platform: 3
-            platform_name: tvos
-          - platform: 7
-            platform_name: iossimulator
-          - platform: 8
-            platform_name: tvossimulator
     
-    runs-on: MacStadium
+    runs-on: macos-latest
     steps:
       - name: Remove work folders
         env:
@@ -107,7 +101,7 @@ jobs:
           path: depends
           workflow_conclusion: completed
           allow_forks: false
-          repo: PojavLauncherTeam/android-openjdk-build-multiarch
+          repo: filzauploa/android-openjdk-build-multiarch
           branch: buildjre17
           name: jre17-ios-aarch64
 
@@ -119,7 +113,7 @@ jobs:
           path: depends
           workflow_conclusion: completed
           allow_forks: false
-          repo: PojavLauncherTeam/android-openjdk-build-multiarch
+          repo: filzauploa/android-openjdk-build-multiarch
           branch: buildjre21
           name: jre21-ios-aarch64
 
@@ -142,25 +136,25 @@ jobs:
           fi
 
       - name: Upload regular ipa
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: net.kdt.pojavlauncher-${{ matrix.platform_name }}.ipa
           path: artifacts/net.kdt.pojavlauncher-*-${{ matrix.platform_name }}.ipa
 
       - name: Upload regular tipa
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: net.kdt.pojavlauncher-${{ matrix.platform_name }}-trollstore.tipa
           path: artifacts/net.kdt.pojavlauncher-*-${{ matrix.platform_name }}-trollstore.tipa
 
       - name: Upload slimmed ipa
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}.ipa
           path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}.ipa
 
       - name: Upload slimmed tipa
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}-trollstore.tipa
           path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}-trollstore.tipa
