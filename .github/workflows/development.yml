@@ -160,7 +160,7 @@ jobs:
           path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}-trollstore.tipa
 
       - name: Upload PojavLauncher.dSYM
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@main
         with:
           name: PojavLauncher.dSYM
           path: artifacts/PojavLauncher.dSYM
