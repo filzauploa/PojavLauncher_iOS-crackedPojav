@@ -83,8 +83,11 @@
         if ([library[@"name"] hasPrefix:@"net.java.dev.jna:jna:"]) {
             // Special handling for LabyMod 1.8.9 and Forge 1.12.2(?)
             // we have libjnidispatch 5.13.0 in Frameworks directory
-            if (!(version[0].intValue < 5 || version[1].intValue < 13 || version[2].intValue < 1)) {
-                NSLog(@"[MCDL] Warning: JNA version required by %@ is %@ > 5.13.0, compatibility might be broken.", json[@"id"], versionStr);
+            uint32_t bundledVer = 5 << 16 | 13 << 8 | 0;
+            uint32_t requiredVer = (char)version[0].intValue << 16 | (char)version[1].intValue << 8 | (char)version[2].intValue;
+            if (requiredVer > bundledVer) {
+                NSLog(@"[MCDL] Warning: JNA version required by %@ is %@ > 5.13.0, skipping JNA replacement.", json[@"id"], versionStr);
+                continue;
             }
             library[@"name"] = @"net.java.dev.jna:jna:5.13.0";
             library[@"downloads"][@"artifact"][@"path"] = @"net/java/dev/jna/jna/5.13.0/jna-5.13.0.jar";

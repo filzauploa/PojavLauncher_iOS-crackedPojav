@@ -80,4 +80,12 @@
     self.layoutDictionary[@"scaledAt"] = @(savedScale);
 }
 
+// https://nsantoine.dev/posts/CALayerCaptureHiding
+- (void)hideViewFromCapture:(BOOL)hide {
+    if ([self.layer respondsToSelector:@selector(disableUpdateMask)]) {
+        NSUInteger hideFlag = (1 << 1) | (1 << 4);
+        self.layer.disableUpdateMask = hide ? hideFlag : 0;
+    }
+}
+
 @end

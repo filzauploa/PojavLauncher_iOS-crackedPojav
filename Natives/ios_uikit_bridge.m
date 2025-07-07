@@ -21,7 +21,7 @@ void internal_showDialog(NSString* title, NSString* message) {
     UIAlertAction* okAction = [UIAlertAction actionWithTitle:localize(@"OK", nil) style:UIAlertActionStyleDefault handler:nil];
     [alert addAction:okAction];
 
-    UIWindow *alertWindow = [[UIWindow alloc] initWithWindowScene:currentWindow().windowScene];
+    UIWindow *alertWindow = [[UIWindow alloc] initWithWindowScene:UIWindow.mainWindow.windowScene];
     alertWindow.frame = UIScreen.mainScreen.bounds;
     alertWindow.rootViewController = [UIViewController new];
     alertWindow.windowLevel = 1000;
@@ -84,7 +84,7 @@ dispatch_async(dispatch_get_main_queue(), ^{
 });
 }
 
-jstring UIKit_accessClipboard(JNIEnv* env, jint action, jstring copySrc) {
+jstring UIKit_accessClipboard(JNIEnv* env, jint action, jbyteArray copySrc) {
     if (action == CLIPBOARD_PASTE) {
         // paste request
         if (UIPasteboard.generalPasteboard.hasStrings) {
@@ -94,9 +94,11 @@ jstring UIKit_accessClipboard(JNIEnv* env, jint action, jstring copySrc) {
         }
     } else if (action == CLIPBOARD_COPY) {
         // copy request
-        const char* copySrcC = (*env)->GetStringUTFChars(env, copySrc, 0);
-        UIPasteboard.generalPasteboard.string = @(copySrcC);
-        (*env)->ReleaseStringUTFChars(env, copySrc, copySrcC);
+        const char* copySrcC = (*env)->GetByteArrayElements(env, copySrc, 0);
+        if (copySrcC) {
+            UIPasteboard.generalPasteboard.string = @(copySrcC);
+            (*env)->ReleaseByteArrayElements(env, copySrc, copySrcC, 0);
+        }
         return NULL;
     } else {
         // unknown request
@@ -105,12 +107,11 @@ jstring UIKit_accessClipboard(JNIEnv* env, jint action, jstring copySrc) {
     }
 }
 
-void UIKit_launchMinecraftSurfaceVC(NSDictionary* metadata) {
+void UIKit_launchMinecraftSurfaceVC(UIWindow* window, NSDictionary* metadata) {
     // Leave this pref, might be useful later for launching with Quick Actions/Shortcuts/URL Scheme
     //setPreference(@"internal_launch_on_boot", getPreference(@"restart_before_launch"));
     setPrefObject(@"internal.selected_account", BaseAuthenticator.current.authData[@"username"]);
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = currentWindow();
         tmpRootVC = window.rootViewController;
         [UIView animateWithDuration:0.2 animations:^{
             window.alpha = 0;
@@ -127,7 +128,7 @@ void UIKit_returnToSplitView() {
     // Researching memory-safe ways to return from SurfaceViewController to the split view
     // so that the app doesn't close when quitting the game (similar behaviour to Android)
     dispatch_async(dispatch_get_main_queue(), ^{
-        UIWindow *window = currentWindow();
+        UIWindow *window = UIWindow.mainWindow;
 
         // Return from JavaGUIViewController
         if ([window.rootViewController isKindOfClass:LauncherSplitViewController.class]) {

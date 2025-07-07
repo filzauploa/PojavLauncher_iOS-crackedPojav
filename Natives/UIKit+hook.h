@@ -11,6 +11,10 @@
 @property(nonatomic) BOOL isSizeFixed;
 @end
 
+@interface UIImage(hook)
+- (UIImage *)hook_imageWithSize:(CGSize)size;
+@end
+
 // private functions
 @interface UIContextMenuInteraction(private)
 - (void)_presentMenuAtLocation:(CGPoint)location;
@@ -30,6 +34,11 @@
 
 @interface UITextField(private)
 @property(assign, nonatomic) NSInteger nonEditingLinebreakMode;
+@end
+
+@interface UIWindow(global)
++ (UIWindow *)mainWindow;
++ (UIWindow *)externalWindow;
 @end
 
 /*

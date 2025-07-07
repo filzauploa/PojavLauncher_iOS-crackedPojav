@@ -19,11 +19,12 @@
 #import "SurfaceViewController.h"
 #import "TrackedTextField.h"
 #import "UIKit+hook.h"
-
 #import "ios_uikit_bridge.h"
 
 #include "glfw_keycodes.h"
 #include "utils.h"
+
+#include <dlfcn.h>
 
 int memorystatus_control(uint32_t command, int32_t pid, uint32_t flags, void *buffer, size_t buffersize);
 #define MEMORYSTATUS_CMD_SET_JETSAM_TASK_LIMIT        6
@@ -50,7 +51,8 @@ static GameSurfaceView* pojavWindow;
 @property(nonatomic) CGFloat screenScale;
 @property(nonatomic) CGFloat mouseSpeed;
 @property(nonatomic) CGRect clickRange;
-@property(nonatomic) BOOL isMacCatalystApp, shouldTriggerClick, shouldTriggerHaptic, slideableHotbar, toggleHidden;
+@property(nonatomic) BOOL isMacCatalystApp, shouldHideControlsFromRecording,
+    shouldTriggerClick, shouldTriggerHaptic, slideableHotbar, toggleHidden;
 
 @property(nonatomic) BOOL enableMouseGestures, enableHotbarGestures;
 
@@ -72,7 +74,9 @@ static GameSurfaceView* pojavWindow;
     [super viewDidLoad];
     isControlModifiable = NO;
     self.isMacCatalystApp = NSProcessInfo.processInfo.isMacCatalystApp;
-    
+    // Load MetalHUD library
+    dlopen("/usr/lib/libMTLHud.dylib", 0);
+
     self.lightHaptic = [[UIImpactFeedbackGenerator alloc] initWithStyle:(UIImpactFeedbackStyleLight)];
     self.mediumHaptic = [[UIImpactFeedbackGenerator alloc] initWithStyle:(UIImpactFeedbackStyleMedium)];
 
@@ -287,19 +291,19 @@ static GameSurfaceView* pojavWindow;
 - (void)updateAudioSettings {
     NSError *sessionError = nil;
     AVAudioSessionCategory category;
-    AVAudioSessionCategoryOptions options;
+    AVAudioSessionCategoryOptions options = 0;
     if(getPrefBool(@"video.silence_with_switch")) {
         category = AVAudioSessionCategorySoloAmbient;
     } else {
-        category = AVAudioSessionCategoryPlayback;
+        category = AVAudioSessionCategoryPlayAndRecord;
+        options |= AVAudioSessionCategoryOptionAllowAirPlay | AVAudioSessionCategoryOptionAllowBluetooth | AVAudioSessionCategoryOptionAllowBluetoothA2DP | AVAudioSessionCategoryOptionDefaultToSpeaker;
     }
-    if(getPrefBool(@"video.silence_other_audio")) {
-        options = 0;
-    } else {
-        options = AVAudioSessionCategoryOptionMixWithOthers;
+    if(!getPrefBool(@"video.silence_other_audio")) {
+        options |= AVAudioSessionCategoryOptionMixWithOthers;
     }
-    [AVAudioSession.sharedInstance setCategory:category withOptions:options error:&sessionError];
-    [AVAudioSession.sharedInstance setActive:YES error:&sessionError];
+    AVAudioSession *session = AVAudioSession.sharedInstance;
+    [session setCategory:category withOptions:options error:&sessionError];
+    [session setActive:YES error:&sessionError];
 }
 
 - (void)updateJetsamControl {
@@ -338,6 +342,8 @@ static GameSurfaceView* pojavWindow;
     virtualMouseFrame = CGRectMake(self.view.frame.size.width / 2, self.view.frame.size.height / 2, 18.0 * mouseScale, 27 * mouseScale);
     self.mousePointerView.frame = virtualMouseFrame;
 
+    self.shouldHideControlsFromRecording = getPrefFloat(@"control.recording_hide");
+    [self.ctrlView hideViewFromCapture:self.shouldHideControlsFromRecording];
     self.ctrlView.frame = getSafeArea();
 
     // Update gestures state
@@ -354,6 +360,13 @@ static GameSurfaceView* pojavWindow;
     [self updateAudioSettings];
     // Update resolution
     [self updateSavedResolution];
+    // Update performance HUD visibility
+    if (@available(iOS 16, tvOS 16, *)) {
+        if ([self.surfaceView.layer isKindOfClass:CAMetalLayer.class]) {
+            BOOL perfHUDEnabled = getPrefBool(@"video.performance_hud");
+            ((CAMetalLayer *)self.surfaceView.layer).developerHUDProperties = perfHUDEnabled ? @{@"mode": @"default"} : nil;
+        }
+    }
 }
 
 - (void)updateSavedResolution {
@@ -1049,7 +1062,7 @@ int touchesMovedCount;
 }
 
 + (BOOL)isRunning {
-    return [currentWindow().rootViewController isKindOfClass:SurfaceViewController.class];
+    return [UIWindow.mainWindow.rootViewController isKindOfClass:SurfaceViewController.class];
 }
 
 + (GameSurfaceView *)surface {

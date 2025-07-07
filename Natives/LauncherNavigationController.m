@@ -18,6 +18,8 @@
 #import "ios_uikit_bridge.h"
 #import "utils.h"
 
+#include <sys/time.h>
+
 #define AUTORESIZE_MASKS UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin
 
 static void *ProgressObserverContext = &ProgressObserverContext;
@@ -79,7 +81,7 @@ static void *ProgressObserverContext = &ProgressObserverContext;
     setButtonPointerInteraction(self.buttonInstall);
     [self.buttonInstall setTitle:localize(@"Play", nil) forState:UIControlStateNormal];
     self.buttonInstall.autoresizingMask = AUTORESIZE_MASKS;
-    self.buttonInstall.backgroundColor = [UIColor colorWithRed:54/255.0 green:176/255.0 blue:48/255.0 alpha:1.0];
+    self.buttonInstall.backgroundColor = [UIColor colorWithRed:121/255.0 green:56/255.0 blue:162/255.0 alpha:1.0];
     self.buttonInstall.layer.cornerRadius = 5;
     self.buttonInstall.frame = CGRectMake(self.toolbar.frame.size.width * 0.8, 4, self.toolbar.frame.size.width * 0.2, self.toolbar.frame.size.height - 8);
     self.buttonInstall.tintColor = UIColor.whiteColor;
@@ -299,17 +301,37 @@ static void *ProgressObserverContext = &ProgressObserverContext;
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
     if (context != ProgressObserverContext) {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+
+    // Calculate download speed and ETA
+    static CGFloat lastMsTime;
+    static NSUInteger lastSecTime, lastCompletedUnitCount;
+    NSProgress *progress = self.task.textProgress;
+    struct timeval tv;
+    gettimeofday(&tv, NULL); 
+    NSInteger completedUnitCount = self.task.progress.totalUnitCount * self.task.progress.fractionCompleted;
+    progress.completedUnitCount = completedUnitCount;
+    if (lastSecTime < tv.tv_sec) {
+        CGFloat currentTime = tv.tv_sec + tv.tv_usec / 1000000.0;
+        NSInteger throughput = (completedUnitCount - lastCompletedUnitCount) / (currentTime - lastMsTime);
+        progress.throughput = @(throughput);
+        progress.estimatedTimeRemaining = @((progress.totalUnitCount - completedUnitCount) / throughput);
+        lastCompletedUnitCount = completedUnitCount;
+        lastSecTime = tv.tv_sec;
+        lastMsTime = currentTime;
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
-        NSProgress *progress = object;
-        self.progressText.text = [NSString stringWithFormat:@"(%@) %@", progress.localizedAdditionalDescription, progress.localizedDescription];
+        self.progressText.text = progress.localizedAdditionalDescription;
+
         if (!progress.finished) return;
+        [self.progressVC dismissModalViewControllerAnimated:NO];
 
         self.progressViewMain.observedProgress = nil;
         if (self.task.metadata) {
             [self invokeAfterJITEnabled:^{
-                UIKit_launchMinecraftSurfaceVC(self.task.metadata);
+                UIKit_launchMinecraftSurfaceVC(self.view.window, self.task.metadata);
             }];
         } else {
             self.task = nil;
@@ -351,10 +373,8 @@ static void *ProgressObserverContext = &ProgressObserverContext;
     BOOL hasTrollStoreJIT = getEntitlementValue(@"com.apple.private.local.sandboxed-jit");
 
     if (isJITEnabled(false)) {
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [ALTServerManager.sharedManager stopDiscovering];
-            handler();
-        });
+        [ALTServerManager.sharedManager stopDiscovering];
+        handler();
         return;
     } else if (hasTrollStoreJIT) {
         NSURL *jitURL = [NSURL URLWithString:[NSString stringWithFormat:@"apple-magnifier://enable-jit?bundle-id=%@", NSBundle.mainBundle.bundleIdentifier]];
@@ -366,7 +386,7 @@ static void *ProgressObserverContext = &ProgressObserverContext;
         return;
     }
 
-    //CADisplayLink *displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(tickJIT)];
+    self.progressText.text = localize(@"launcher.wait_jit.title", nil);
 
     UIAlertController* alert = [UIAlertController alertControllerWithTitle:localize(@"launcher.wait_jit.title", nil)
         message:hasTrollStoreJIT ? localize(@"launcher.wait_jit_trollstore.message", nil) : localize(@"launcher.wait_jit.message", nil)

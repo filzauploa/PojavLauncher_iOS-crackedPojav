@@ -15,6 +15,7 @@
 #import "JavaLauncher.h"
 #import "LauncherPreferences.h"
 #import "PLProfiles.h"
+#import "authenticator/ElyAuthenticator.h"
 
 #define fm NSFileManager.defaultManager
 
@@ -91,6 +92,14 @@ void init_loadCustomJvmFlags(int* argc, const char** argv) {
 int launchJVM(NSString *username, id launchTarget, int width, int height, int minVersion) {
     NSLog(@"[JavaLauncher] Beginning JVM launch");
 
+    if (NSBundle.mainBundle.infoDictionary[@"LCDataUUID"]) {
+        NSDebugLog(@"[JavaLauncher] Running in LiveContainer, skipping dyld patch");
+    } else {
+        // Activate Library Validation bypass for external runtime and dylibs (JNA, etc)
+        init_bypassDyldLibValidation();
+    }
+
+
     init_loadDefaultEnv();
     init_loadCustomEnv();
 
@@ -138,13 +147,6 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
             isExecuteJar ? [launchTarget lastPathComponent] : PLProfiles.current.selectedProfile[@"lastVersionId"], minVersion]);
         return 1;
     } else if ([javaHome hasPrefix:@(getenv("POJAV_HOME"))]) {
-        if (NSBundle.mainBundle.infoDictionary[@"LCDataUUID"]) {
-            NSDebugLog(@"[JavaLauncher] Running in LiveContainer, skipping dyld patch");
-        } else {
-            // Activate Library Validation bypass for external runtime
-            init_bypassDyldLibValidation();
-        }
-
         // Symlink libawt_xawt.dylib
         NSString *dest = [NSString stringWithFormat:@"%@/lib/libawt_xawt.dylib", javaHome];
         NSString *source = [NSString stringWithFormat:@"%@/Frameworks/libawt_xawt.dylib", NSBundle.mainBundle.bundlePath];
@@ -178,7 +180,6 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     margv[++margc] = "-Xms128M";
     margv[++margc] = [NSString stringWithFormat:@"-Xmx%dM", allocmem].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Djava.library.path=%@/Frameworks", NSBundle.mainBundle.bundlePath].UTF8String;
-    margv[++margc] = [NSString stringWithFormat:@"-Djna.boot.library.path=%@/Frameworks", NSBundle.mainBundle.bundlePath].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.dir=%@", gameDir].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.home=%s", getenv("POJAV_HOME")].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.timezone=%@", NSTimeZone.localTimeZone.name].UTF8String;
@@ -199,8 +200,31 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     }
 
     NSString *librariesPath = [NSString stringWithFormat:@"%@/libs", NSBundle.mainBundle.bundlePath];
+    margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/patchjna_agent.jar=", librariesPath].UTF8String;
     if(getPrefBool(@"general.cosmetica")) {
         margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/arc_dns_injector.jar=23.95.137.176", librariesPath].UTF8String;
+    }
+    
+    // Добавляем authlib-injector для Ely.by, если это аккаунт Ely.by
+    if (BaseAuthenticator.current.authData[@"isElyby"] != nil && [BaseAuthenticator.current.authData[@"isElyby"] boolValue]) {
+        NSString *authlibPath = [ElyAuthenticator getAuthlibInjectorPath];
+        if ([[NSFileManager defaultManager] fileExistsAtPath:authlibPath]) {
+            margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@=ely.by", authlibPath].UTF8String;
+            NSLog(@"[JavaLauncher] authlib-injector added for Ely.by");
+        } else {
+            // В случае отсутствия файла, показываем сообщение, но продолжаем запуск
+            // Синхронная загрузка при запуске может вызвать проблемы
+            NSLog(@"[JavaLauncher] Warning: authlib-injector not found for Ely.by account");
+            showDialog(localize(@"Warning", nil), localize(@"login.elyby.missing_authlib", nil));
+            // Загрузим для следующего запуска
+            [ElyAuthenticator downloadLatestAuthlibInjector:^(BOOL success, NSString *message) {
+                if (success) {
+                    NSLog(@"[JavaLauncher] Successfully downloaded authlib-injector for Ely.by for next launch");
+                } else {
+                    NSLog(@"[JavaLauncher] Error downloading authlib-injector: %@", message);
+                }
+            }];
+        }
     }
 
     // Workaround random stack guard allocation crashes

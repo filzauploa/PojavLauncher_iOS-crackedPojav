@@ -7,7 +7,7 @@ static void *CellProgressObserverContext = &CellProgressObserverContext;
 static void *TotalProgressObserverContext = &TotalProgressObserverContext;
 
 @interface DownloadProgressViewController ()
-@property BOOL needsReloadData;
+@property NSInteger fileListCount;
 @end
 
 @implementation DownloadProgressViewController
@@ -29,7 +29,7 @@ static void *TotalProgressObserverContext = &TotalProgressObserverContext;
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     
-[self.task.progress addObserver:self
+[self.task.textProgress addObserver:self
         forKeyPath:@"fractionCompleted"
         options:NSKeyValueObservingOptionInitial
         context:TotalProgressObserverContext];
@@ -38,7 +38,7 @@ static void *TotalProgressObserverContext = &TotalProgressObserverContext;
 - (void)viewDidDisappear:(BOOL)animated {
     [super viewDidDisappear:animated];
     
-[self.task.progress removeObserver:self forKeyPath:@"fractionCompleted"];
+[self.task.textProgress removeObserver:self forKeyPath:@"fractionCompleted"];
 }
 
 - (void)actionClose {
@@ -60,10 +60,11 @@ static void *TotalProgressObserverContext = &TotalProgressObserverContext;
         });
     } else if (context == TotalProgressObserverContext) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            self.title = [NSString stringWithFormat:@"(%@) %@", progress.localizedAdditionalDescription, progress.localizedDescription];
-            if (self.needsReloadData) {
+            self.title = progress.localizedDescription;
+            if (self.fileListCount != self.task.fileList.count) {
                 [self.tableView reloadData];
             }
+            self.fileListCount = self.task.fileList.count;
         });
     } else {
         [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
@@ -72,7 +73,6 @@ static void *TotalProgressObserverContext = &TotalProgressObserverContext;
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    self.needsReloadData = self.task.fileList.count == 0;
     return self.task.fileList.count;
 }
 

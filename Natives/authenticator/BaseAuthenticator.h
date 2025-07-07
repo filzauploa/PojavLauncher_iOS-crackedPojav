@@ -26,3 +26,10 @@ typedef void(^Callback)(id status, BOOL success);
 + (void)clearTokenDataOfProfile:(NSString *)profile;
 
 @end
+
+@interface ElyAuthenticator : BaseAuthenticator
+
++ (void)downloadLatestAuthlibInjector:(void (^)(BOOL success, NSString *message))callback;
++ (NSString *)getAuthlibInjectorPath;
+
+@end
