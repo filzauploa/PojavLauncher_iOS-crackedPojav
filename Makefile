@@ -280,9 +280,9 @@ jre: native
 	echo '[Amethyst v$(VERSION)] jre - start'
 	mkdir -p $(SOURCEDIR)/depends
 	cd $(SOURCEDIR)/depends; \
-	$(call METHOD_JAVA_UNPACK,8,'https://nightly.link/PojavLauncherTeam/android-openjdk-build-multiarch/workflows/build/buildjre8/jre8-ios-aarch64.zip'); \
-	$(call METHOD_JAVA_UNPACK,17,'https://nightly.link/PojavLauncherTeam/android-openjdk-build-multiarch/workflows/build/buildjre17-21/jre17-ios-aarch64.zip'); \
-	$(call METHOD_JAVA_UNPACK,21,'https://nightly.link/PojavLauncherTeam/android-openjdk-build-multiarch/workflows/build/buildjre17-21/jre21-ios-aarch64.zip'); \
+	$(call METHOD_JAVA_UNPACK,8,'https://crystall1ne.dev/cdn/amethyst-ios/jre8-ios-aarch64.zip'); \
+	$(call METHOD_JAVA_UNPACK,17,'https://crystall1ne.dev/cdn/amethyst-ios/jre17-ios-aarch64.zip'); \
+	$(call METHOD_JAVA_UNPACK,21,'https://crystall1ne.dev/cdn/amethyst-ios/jre21-ios-aarch64.zip'); \
 	if [ -f "$(ls jre*.tar.xz)" ]; then rm $(SOURCEDIR)/depends/jre*.tar.xz; fi; \
 	cd $(SOURCEDIR); \
 	rm -rf $(SOURCEDIR)/depends/java-*-openjdk/{ASSEMBLY_EXCEPTION,bin,include,jre,legal,LICENSE,man,THIRD_PARTY_README,lib/{ct.sym,jspawnhelper,libjsig.dylib,src.zip,tools.jar}}; \
@@ -294,6 +294,21 @@ jre: native
 	cp $(WORKINGDIR)/libawt_xawt.dylib $(OUTPUTDIR)/java_runtimes/java-17-openjdk/lib;
 	cp $(WORKINGDIR)/libawt_xawt.dylib $(OUTPUTDIR)/java_runtimes/java-21-openjdk/lib
 	echo '[Amethyst v$(VERSION)] jre - end'
+
+dep_mg: native
+	echo '[Amethyst v$(VERSION)] dep_mg - start'
+	cd $(SOURCEDIR)/Natives/external/MobileGlues/src/main/cpp; \
+	wget https://github.com/leetal/ios-cmake/raw/master/ios.toolchain.cmake; \
+	cmake -B build \
+		-DCMAKE_TOOLCHAIN_FILE=ios.toolchain.cmake \
+		-DSTATICLIB=OFF \
+		-DMACOS=ON \
+		-DPLATFORM=OS64 \
+		-DCMAKE_C_FLAGS=-Wno-error=implicit-function-declaration; \
+	cmake --build build --config RelWithDebInfo --target mobileglues; \
+	cp $(SOURCEDIR)/Natives/external/MobileGlues/src/main/cpp/build/libmobileglues.dylib $(WORKINGDIR)/libmobileglues.dylib
+	cp $(SOURCEDIR)/Natives/external/MobileGlues/src/main/cpp/libraries/ios/libspirv-cross-c-shared.0.dylib $(WORKINGDIR)/libspirv-cross-c-shared.0.dylib
+	echo '[Amethyst v$(VERSION)] dep_mg - end'
 
 assets:
 	echo '[Amethyst v$(VERSION)] assets - start'
@@ -310,7 +325,7 @@ assets:
 	fi
 	echo '[Amethyst v$(VERSION)] assets - end'
 
-payload: native java jre assets
+payload: native dep_mg java jre assets
 	echo '[Amethyst v$(VERSION)] payload - start'
 	$(call METHOD_DIRCHECK,$(WORKINGDIR)/AngelAuraAmethyst.app/libs)
 	$(call METHOD_DIRCHECK,$(WORKINGDIR)/AngelAuraAmethyst.app/libs_caciocavallo)
