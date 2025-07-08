@@ -4,6 +4,8 @@
 #import "UIKit+hook.h"
 #import "utils.h"
 
+__weak UIWindow *mainWindow, *externalWindow;
+
 void swizzle(Class class, SEL originalAction, SEL swizzledAction) {
     method_exchangeImplementations(class_getInstanceMethod(class, originalAction), class_getInstanceMethod(class, swizzledAction));
 }
@@ -12,9 +14,29 @@ void swizzleClass(Class class, SEL originalAction, SEL swizzledAction) {
     method_exchangeImplementations(class_getClassMethod(class, originalAction), class_getClassMethod(class, swizzledAction));
 }
 
+void swizzleUIImageMethod(SEL originalAction, SEL swizzledAction) {
+    Class class = [UIImage class];
+    Method originalMethod = class_getInstanceMethod(class, originalAction);
+    Method swizzledMethod = class_getInstanceMethod(class, swizzledAction);
+    
+    if (originalMethod && swizzledMethod) {
+        method_exchangeImplementations(originalMethod, swizzledMethod);
+    } else {
+        NSLog(@"[UIKit+hook] Warning: Could not swizzle UIImage methods (%@ and %@)", 
+              NSStringFromSelector(originalAction), 
+              NSStringFromSelector(swizzledAction));
+    }
+}
+
 void init_hookUIKitConstructor(void) {
     swizzle(UIDevice.class, @selector(userInterfaceIdiom), @selector(hook_userInterfaceIdiom));
     swizzle(UIImageView.class, @selector(setImage:), @selector(hook_setImage:));
+    if(UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
+        swizzle(UIPointerInteraction.class, @selector(_updateInteractionIsEnabled), @selector(hook__updateInteractionIsEnabled));
+    }
+    
+    // Add this line to swizzle the _imageWithSize: method
+    swizzleUIImageMethod(NSSelectorFromString(@"_imageWithSize:"), @selector(hook_imageWithSize:));
 
     if (realUIIdiom == UIUserInterfaceIdiomTV) {
         if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
@@ -70,6 +92,39 @@ void init_hookUIKitConstructor(void) {
 
 @end
 
+// Implementation of UIImage hook for proper sizing across iOS versions
+@implementation UIImage(hook)
+
+- (UIImage *)hook_imageWithSize:(CGSize)size {
+    if (CGSizeEqualToSize(self.size, size)) {
+        return self;
+    }
+    
+    UIGraphicsImageRendererFormat *format = [UIGraphicsImageRendererFormat defaultFormat];
+    format.scale = self.scale;
+    UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:size format:format];
+    
+    UIImage *newImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext * _Nonnull context) {
+        // Calculate proper proportions
+        CGFloat widthRatio = size.width / self.size.width;
+        CGFloat heightRatio = size.height / self.size.height;
+        CGFloat ratio = MIN(widthRatio, heightRatio);
+        
+        CGFloat newWidth = self.size.width * ratio;
+        CGFloat newHeight = self.size.height * ratio;
+        
+        // Center the image
+        CGFloat x = (size.width - newWidth) / 2;
+        CGFloat y = (size.height - newHeight) / 2;
+        
+        [self drawInRect:CGRectMake(x, y, newWidth, newHeight)];
+    }];
+    
+    return [newImage imageWithRenderingMode:self.renderingMode];
+}
+
+@end
+
 // Patch: unimplemented get/set UIToolbar functions on tvOS
 @implementation UINavigationController(hook)
 
@@ -119,6 +174,14 @@ void init_hookUIKitConstructor(void) {
 
 @implementation UIWindow(hook)
 
++ (UIWindow *)mainWindow {
+    return mainWindow;
+}
+
++ (UIWindow *)externalWindow {
+    return externalWindow;
+}
+
 - (UIViewController *)visibleViewController {
     UIViewController *current = self.rootViewController;
     while (current.presentedViewController) {
@@ -144,21 +207,33 @@ void init_hookUIKitConstructor(void) {
 }
 @end
 
-UIWindow* currentWindowInScene(BOOL external) {
-    id delegate = UIApplication.sharedApplication.delegate;
-    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes.allObjects) {
-        delegate = scene.delegate;
-        if (external != (scene.session.role == UIWindowSceneSessionRoleApplication)) {
-            break;
+// Patch: allow UIHoverGestureRecognizer on iPhone
+// from TrollPad (https://github.com/khanhduytran0/TrollPad/commit/8eab1b20315e73ed7d5319ff0833564fe2819b30#diff-98dd369a9e94e4f3a4b45dc0288b6b5ec666b35eae93c9cde4375921cbb20e48)
+@implementation UIPointerInteraction(hook)
+- (void)hook__updateInteractionIsEnabled {
+    UIView *view = self.view;
+    BOOL enabled = self.enabled; // && view.traitCollection.userInterfaceIdiom == UIUserInterfaceIdiomPad
+    if([self respondsToSelector:@selector(drivers)]) {
+        for(id<_UIPointerInteractionDriver> driver in self.drivers) {
+            driver.view = enabled ? view : nil;
         }
+    } else {
+        self.driver.view = enabled ? view : nil;
     }
-    return [delegate window];
-}
+    // to keep it fast, ivar offset is cached for later direct access
+    static ptrdiff_t ivarOff = 0;
+    if(!ivarOff) {
+        ivarOff = ivar_getOffset(class_getInstanceVariable(self.class, "_observingPresentationNotification"));
+    }
 
-UIWindow* currentWindow() {
-    return currentWindowInScene(0);
+    BOOL *observingPresentationNotification = (BOOL *)((uint64_t)(__bridge void *)self + ivarOff);
+    if(!enabled && *observingPresentationNotification) {
+        [NSNotificationCenter.defaultCenter removeObserver:self name:UIPresentationControllerPresentationTransitionWillBeginNotification object:nil];
+        *observingPresentationNotification = NO;
+    }
 }
+@end
 
 UIViewController* currentVC() {
-    return currentWindow().visibleViewController;
+    return UIWindow.mainWindow.visibleViewController;
 }

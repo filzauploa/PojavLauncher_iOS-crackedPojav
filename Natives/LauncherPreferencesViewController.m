@@ -96,13 +96,9 @@
               },
               @"pickKeys": @[
                   @"AppIcon-Light",
-                  @"AppIcon-Dark",
-                  @"AppIcon-Development"
               ],
               @"pickList": @[
-                  localize(@"preference.title.appicon-default", nil),
-                  localize(@"preference.title.appicon-dark", nil),
-                  localize(@"preference.title.appicon-development", nil)
+                  localize(@"preference.title.appicon-default", nil)
               ]
             },
             @{@"key": @"hidden_sidebar",
@@ -183,6 +179,14 @@
                   return whenNotInGame() && (UIScreen.mainScreen.maximumFramesPerSecond > 60);
               }
             },
+            @{@"key": @"performance_hud",
+              @"hasDetail": @YES,
+              @"icon": @"waveform.path.ecg",
+              @"type": self.typeSwitch,
+              @"enableCondition": ^BOOL(){
+                  return [CAMetalLayer instancesRespondToSelector:@selector(developerHUDProperties)];
+              }
+            },
             @{@"key": @"fullscreen_airplay",
               @"hasDetail": @YES,
               @"icon": @"airplayvideo",
@@ -207,6 +211,11 @@
               @"icon": @"speaker.zzz",
               @"type": self.typeSwitch
             },
+            @{@"key": @"allow_microphone",
+              @"hasDetail": @YES,
+              @"icon": @"mic",
+              @"type": self.typeSwitch
+            },
         ], @[
             // Control settings
             @{@"icon": @"gamecontroller"},
@@ -218,6 +227,11 @@
                 @"class": LauncherPrefContCfgViewController.class
             },
             @{@"key": @"hardware_hide",
+                @"icon": @"eye.slash",
+                @"hasDetail": @YES,
+                @"type": self.typeSwitch,
+            },
+            @{@"key": @"recording_hide",
                 @"icon": @"eye.slash",
                 @"hasDetail": @YES,
                 @"type": self.typeSwitch,
@@ -386,6 +400,12 @@
     if (self.navigationController == nil) {
         self.tableView.alpha = 0.9;
     }
+    if (NSProcessInfo.processInfo.isMacCatalystApp) {
+        UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeClose];
+        closeButton.frame = CGRectOffset(closeButton.frame, 10, 10);
+        [closeButton addTarget:self action:@selector(actionClose) forControlEvents:UIControlEventTouchUpInside];
+        [self.view addSubview:closeButton];
+    }
 }
 
 - (void)viewWillDisappear:(BOOL)animated {
@@ -395,11 +415,15 @@
     }
 }
 
+- (void)actionClose {
+    [self dismissViewControllerAnimated:YES completion:nil];
+}
+
 #pragma mark UITableView
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == 0) { // Add to general section
-        return [NSString stringWithFormat:@"PojavLauncher %@-%s (%s/%s)\n%@ on %@ (%s)\nPID: %d",
+        return [NSString stringWithFormat:@"Angel Aura Amethyst %@-%s (%s/%s)\n%@ on %@ (%s)\nPID: %d",
             NSBundle.mainBundle.infoDictionary[@"CFBundleShortVersionString"],
             CONFIG_TYPE, CONFIG_BRANCH, CONFIG_COMMIT,
             UIDevice.currentDevice.completeOSVersion, [HostManager GetModelName], getenv("POJAV_DETECTEDINST"), getpid()];

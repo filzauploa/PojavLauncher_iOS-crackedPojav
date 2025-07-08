@@ -217,8 +217,12 @@ typedef void(^XSTSCallback)(NSString *xsts, NSString *uhs);
 - (void)refreshTokenWithCallback:(Callback)callback {
     // Move tokens to keychain if we haven't
     if (!self.tokenData) {
-        [self saveChanges];
+        showDialog(localize(@"Error", nil), @"Failed to load account tokens from keychain");
+        callback(nil, YES);
+        return;
     }
+
+    [self saveChanges];
 
     if ([NSDate.date timeIntervalSince1970] > [self.authData[@"expiresAt"] longValue]) {
         [self acquireAccessToken:self.tokenData[@"refreshToken"] refresh:YES callback:callback];
@@ -244,7 +248,6 @@ typedef void(^XSTSCallback)(NSString *xsts, NSString *uhs);
         (id)kSecClass: (id)kSecClassGenericPassword,
         (id)kSecAttrService: @"AccountToken",
         (id)kSecAttrAccount: profile,
-        (id)kSecAttrAccessible: (id)kSecAttrAccessibleWhenUnlockedThisDeviceOnly
     }.mutableCopy;
     if (extra) {
         [dict addEntriesFromDictionary:extra];
@@ -272,11 +275,16 @@ typedef void(^XSTSCallback)(NSString *xsts, NSString *uhs);
 }
 
 - (BOOL)setAccessToken:(NSString *)accessToken refreshToken:(NSString *)refreshToken {
+    if (!accessToken || !refreshToken) {
+        NSDebugLog(@"[MicrosoftAuthenticator] BUG: nil accessToken:%d, refreshToken:%d", !accessToken, !refreshToken);
+        return NO;
+    }
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:@{
         @"accessToken": accessToken,
         @"refreshToken": refreshToken,
     } requiringSecureCoding:YES error:nil];
     NSDictionary *dict = [MicrosoftAuthenticator keychainQueryForKey:self.authData[@"xuid"] extraInfo:@{
+        (id)kSecAttrAccessible: (id)kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
         (id)kSecValueData: data
     }];
     SecItemDelete((__bridge CFDictionaryRef)dict);

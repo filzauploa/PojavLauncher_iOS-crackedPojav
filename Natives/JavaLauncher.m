@@ -20,6 +20,15 @@
 
 extern char **environ;
 
+BOOL validateVirtualMemorySpace(int size) {
+    size <<= 20; // convert to MB
+    void *map = mmap(0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    // check if process successfully maps and unmaps a contiguous range
+    if(map == MAP_FAILED || munmap(map, size) != 0)
+        return NO;
+    return YES;
+}
+
 void init_loadDefaultEnv() {
     /* Define default env */
 
@@ -91,6 +100,14 @@ void init_loadCustomJvmFlags(int* argc, const char** argv) {
 int launchJVM(NSString *username, id launchTarget, int width, int height, int minVersion) {
     NSLog(@"[JavaLauncher] Beginning JVM launch");
 
+    if (NSBundle.mainBundle.infoDictionary[@"LCDataUUID"]) {
+        NSDebugLog(@"[JavaLauncher] Running in LiveContainer, skipping dyld patch");
+    } else {
+        // Activate Library Validation bypass for external runtime and dylibs (JNA, etc)
+        init_bypassDyldLibValidation();
+    }
+
+
     init_loadDefaultEnv();
     init_loadCustomEnv();
 
@@ -138,13 +155,6 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
             isExecuteJar ? [launchTarget lastPathComponent] : PLProfiles.current.selectedProfile[@"lastVersionId"], minVersion]);
         return 1;
     } else if ([javaHome hasPrefix:@(getenv("POJAV_HOME"))]) {
-        if (NSBundle.mainBundle.infoDictionary[@"LCDataUUID"]) {
-            NSDebugLog(@"[JavaLauncher] Running in LiveContainer, skipping dyld patch");
-        } else {
-            // Activate Library Validation bypass for external runtime
-            init_bypassDyldLibValidation();
-        }
-
         // Symlink libawt_xawt.dylib
         NSString *dest = [NSString stringWithFormat:@"%@/lib/libawt_xawt.dylib", javaHome];
         NSString *source = [NSString stringWithFormat:@"%@/Frameworks/libawt_xawt.dylib", NSBundle.mainBundle.bundlePath];
@@ -161,11 +171,16 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     int allocmem;
     if (getPrefBool(@"java.auto_ram")) {
         CGFloat autoRatio = getEntitlementValue(@"com.apple.private.memorystatus") ? 0.4 : 0.25;
-        allocmem = roundf((NSProcessInfo.processInfo.physicalMemory / 1048576) * autoRatio);
+        allocmem = roundf((NSProcessInfo.processInfo.physicalMemory >> 20) * autoRatio);
     } else {
         allocmem = getPrefInt(@"java.allocated_memory");
     }
     NSLog(@"[JavaLauncher] Max RAM allocation is set to %d MB", allocmem);
+    if (!validateVirtualMemorySpace(allocmem)) {
+        UIKit_returnToSplitView();
+        showDialog(localize(@"Error", nil), @"Insufficient contiguous virtual memory space. Lower memory allocation and try again.");
+        return 1;
+    }
 
     int margc = -1;
     const char *margv[1000];
@@ -178,7 +193,6 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     margv[++margc] = "-Xms128M";
     margv[++margc] = [NSString stringWithFormat:@"-Xmx%dM", allocmem].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Djava.library.path=%@/Frameworks", NSBundle.mainBundle.bundlePath].UTF8String;
-    margv[++margc] = [NSString stringWithFormat:@"-Djna.boot.library.path=%@/Frameworks", NSBundle.mainBundle.bundlePath].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.dir=%@", gameDir].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.home=%s", getenv("POJAV_HOME")].UTF8String;
     margv[++margc] = [NSString stringWithFormat:@"-Duser.timezone=%@", NSTimeZone.localTimeZone.name].UTF8String;
@@ -199,6 +213,7 @@ int launchJVM(NSString *username, id launchTarget, int width, int height, int mi
     }
 
     NSString *librariesPath = [NSString stringWithFormat:@"%@/libs", NSBundle.mainBundle.bundlePath];
+    margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/patchjna_agent.jar=", librariesPath].UTF8String;
     if(getPrefBool(@"general.cosmetica")) {
         margv[++margc] = [NSString stringWithFormat:@"-javaagent:%@/arc_dns_injector.jar=23.95.137.176", librariesPath].UTF8String;
     }

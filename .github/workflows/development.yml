@@ -19,7 +19,9 @@ jobs:
           - platform: 2
             platform_name: ios
     
+
     runs-on: macos-latest
+
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK 8
@@ -28,13 +30,11 @@ jobs:
           distribution: 'zulu'
           java-version: '8'
       - name: Remove work folders
-        env:
-          password: ${{ secrets.ELLIE_MINI_SECRET }}
         run: |
           echo "before"
           ls -lah ./
-          echo $password | sudo -S rm -rf ./* || true
-          echo $password | sudo -S rm -rf ./.??* || true
+          rm -rf ./* || true
+          rm -rf ./.??* || true
           echo "after"
           ls -lah ./
           
@@ -55,7 +55,7 @@ jobs:
         shell: bash
 
       - name: Cache gl4es
-        uses: actions/cache@v3
+        uses: actions/cache@main
         if: false # use gl4es 1.1.5
         id: gl4es-cache
         with:
@@ -64,7 +64,7 @@ jobs:
 
       - name: Get gl4es
         if: false && steps.gl4es-cache.outputs.cache-hit != 'true'
-        uses: actions/checkout@v3
+        uses: actions/checkout@main
         with:
           repository: 'PojavLauncherTeam/gl4es-114-extra'
           path: 'gl4es'
@@ -74,8 +74,8 @@ jobs:
         continue-on-error: true
         run: |
           cd gl4es
-          git config --global user.email "github-actions@users.noreply.github.com"
-          git config --global user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git config user.name "github-actions"
           export PATH=/opt/procursus/bin:$PATH
           wget https://github.com/leetal/ios-cmake/raw/master/ios.toolchain.cmake
           cmake -B build -DCMAKE_TOOLCHAIN_FILE=ios.toolchain.cmake -DDEFAULT_ES=2 \
@@ -129,11 +129,9 @@ jobs:
           name: jre21-ios-aarch64
 
       - name: Build for ${{ matrix.platform_name }}
-        env:
-          password: ${{ secrets.ELLIE_MINI_SECRET }}
         run: |
-          export PATH=/opt/procursus/bin:/opt/homebrew/bin:$PATH
-          export RUNNER=1 SLIMMED=1
+          export PATH=/opt/homebrew/bin:$PATH
+          export SLIMMED=1
           if [ "${{ matrix.platform_name }}" == "ios" ]; then
             # Build ipa and tipa for iOS
             gmake -j$(sysctl -n hw.ncpu) dsym package PLATFORM=${{ matrix.platform }}
@@ -149,29 +147,31 @@ jobs:
       - name: Upload regular ipa
         uses: actions/upload-artifact@main
         with:
-          name: net.kdt.pojavlauncher-${{ matrix.platform_name }}.ipa
-          path: artifacts/net.kdt.pojavlauncher-*-${{ matrix.platform_name }}.ipa
+          name: org.angelauramc.amethyst-${{ matrix.platform_name }}.ipa
+          path: artifacts/org.angelauramc.amethyst-*-${{ matrix.platform_name }}.ipa
 
       - name: Upload regular tipa
         uses: actions/upload-artifact@main
         with:
-          name: net.kdt.pojavlauncher-${{ matrix.platform_name }}-trollstore.tipa
-          path: artifacts/net.kdt.pojavlauncher-*-${{ matrix.platform_name }}-trollstore.tipa
+          name: org.angelauramc.amethyst-${{ matrix.platform_name }}-trollstore.tipa
+          path: artifacts/org.angelauramc.amethyst-*-${{ matrix.platform_name }}-trollstore.tipa
 
       - name: Upload slimmed ipa
         uses: actions/upload-artifact@main
         with:
-          name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}.ipa
-          path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}.ipa
+          name: org.angelauramc.amethyst.slimmed-${{ matrix.platform_name }}.ipa
+          path: artifacts/org.angelauramc.amethyst.slimmed-*-${{ matrix.platform_name }}.ipa
 
       - name: Upload slimmed tipa
         uses: actions/upload-artifact@main
         with:
-          name: net.kdt.pojavlauncher.slimmed-${{ matrix.platform_name }}-trollstore.tipa
-          path: artifacts/net.kdt.pojavlauncher.slimmed-*-${{ matrix.platform_name }}-trollstore.tipa
+          name: org.angelauramc.amethyst.slimmed-${{ matrix.platform_name }}-trollstore.tipa
+          path: artifacts/org.angelauramc.amethyst.slimmed-*-${{ matrix.platform_name }}-trollstore.tipa
 
       - name: Upload PojavLauncher.dSYM
         uses: actions/upload-artifact@main
+
+        if: matrix.platform_name == 'ios'
         with:
-          name: PojavLauncher.dSYM
-          path: artifacts/PojavLauncher.dSYM
+          name: AngelAuraAmethyst.dSYM
+          path: artifacts/AngelAuraAmethyst.dSYM

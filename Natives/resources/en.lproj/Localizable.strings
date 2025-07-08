@@ -66,7 +66,7 @@
 "custom_controls.error.incompatible" = "This control version (code %d) is not implemented in this launcher build.";
 "custom_controls.hint" = "Long-press anywhere on screen for more options";
 
-"init.migrateDir" = "The PojavLauncher data directory is now %@. All of your existing data has been moved to the new location.";
+"init.migrateDir" = "The Amethyst data directory is now %@. All of your existing data has been moved to the new location.";
 
 "java.error.missing_main_class" = "%@ is missing main class attribute. If this is a mod, put it into the “mods” folder of your selected instance.";
 "java.error.missing_runtime" = "%@ requires Java %d or later to run. Please install it first and specify it in Manage Runtimes.";
@@ -78,7 +78,7 @@
 "launcher.menu.execute_jar" = "Execute .jar";
 
 "launcher.wait_jit.title" = "Waiting for JIT";
-"launcher.wait_jit.message" = "PojavLauncher relies on Just-in-time compilation for Java to work at maximum performance.";
+"launcher.wait_jit.message" = "Amethyst relies on Just-in-time compilation for Java to work at maximum performance.";
 "launcher.wait_jit_trollstore.message" = "If you still see this message, please enable URL Scheme in TrollStore.";
 
 "login.error.username.outOfRange" = "Username must be at least 3 characters and a maximum of 16 characters";
@@ -100,9 +100,9 @@
 "login.option.microsoft" = "Microsoft account";
 "login.option.local" = "Local account";
 
-"login.warn.title.legacy_device" = "The next release of PojavLauncher will not be compatible with this device.";
+"login.warn.title.legacy_device" = "The next release of Amethyst will not be compatible with this device.";
 "login.warn.message.legacy_device" = "To run the next major release, a device capable of running iOS 14 is required.";
-"login.warn.title.legacy_ios" = "The next release of PojavLauncher will require a system update.";
+"login.warn.title.legacy_ios" = "The next release of Amethyst will require a system update.";
 "login.warn.message.legacy_ios" = "To run the next major release, this device needs to be running iOS 14 or later.";
 "login.warn.title.limited_ram" = "This device has a limited amount of memory available.";
 "login.warn.message.limited_ram" = "We recommend leaving auto RAM enabled to prevent instability and performance issues.";
@@ -131,7 +131,7 @@
 
 "preference.section.general" = "General Settings";
 "preference.section.video" = "Video and Audio Settings";
-"preference.section.footer.video" = "Auto renderer allows PojavLauncher to choose the best option based on Minecraft version. Decreasing resolution reduces GPU workload for better performance.";
+"preference.section.footer.video" = "Auto renderer allows Amethyst to choose the best option based on Minecraft version. Decreasing resolution reduces GPU workload for better performance.";
 "preference.section.control" = "Control customization";
 "preference.section.debug" = "UI Debugging settings";
 "preference.section.footer.debug" = "You may need to restart the launcher for changes to take effect.";
@@ -152,9 +152,9 @@
 "preference.title.debug_logging" = "Debug logging";
 "preference.detail.debug_logging" = "Logs internal settings and actions to latestlog.txt. This helps the developers find issues easier, but Minecraft may run slower as the logs will be written to more often.";
 "preference.title.appicon" = "Set app icon";
-"preference.detail.appicon" = "Allows you to choose between different Home Screen icons for PojavLauncher.";
-"preference.title.appicon-default" = "Familiar PojavLauncher light";
-"preference.title.appicon-dark" = "Familiar PojavLauncher dark";
+"preference.detail.appicon" = "Allows you to choose between different Home Screen icons for Amethyst.";
+"preference.title.appicon-default" = "Familiar Amethyst light";
+"preference.title.appicon-dark" = "Familiar Amethyst dark";
 "preference.title.appicon-development" = "Penciled Development";
 "preference.title.hidden_sidebar" = "Hide main menu sidebar by default";
 "preference.detail.hidden_sidebar" = "Allows you to hide the sidebar on the main menu by default and when rotating.";
@@ -175,11 +175,13 @@
 "preference.title.renderer.release.auto" = "Auto";
 "preference.title.renderer.release.gl4es" = "holy gl4es";
 "preference.title.renderer.release.angle" = "ANGLE";
+"preference.title.renderer.release.mg" = "MobileGlues";
 "preference.title.renderer.release.zink" = "Zink";
 
 "preference.title.renderer.debug.auto" = "Auto: gl4es or ANGLE";
 "preference.title.renderer.debug.gl4es" = "holy gl4es - exports OpenGL 2.1";
 "preference.title.renderer.debug.angle" = "ANGLE (1.17+) - exports OpenGL 3.2 (Core Profile, limited)";
+"preference.title.renderer.debug.mg" = "MobileGlues (1.17+) - exports OpenGL 4.0, EXPERIMENTAL";
 "preference.title.renderer.debug.zink" = "Zink (Mesa 21.0) - exports OpenGL 4.1";
 
 "preference.detail.renderer" = "Change the OpenGL render engine to use. Zink is temporarily disabled on iOS 16 and later to diagnose issues.";
@@ -189,15 +191,22 @@
 "preference.title.max_framerate" = "Maximum framerate";
 "preference.detail.max_framerate" = "Allows you to limit the game framerate to 60FPS on ProMotion displays.";
 
+"preference.title.performance_hud" = "Show Performance HUD";
+"preference.detail.performance_hud" = "When available, show the performance monitoring overlay.";
+
 "preference.title.fullscreen_airplay" = "Fullscreen AirPlay";
 "preference.detail.fullscreen_airplay" = "Allows presenting fullscreen game window on the external display rather than mirroring everything on screen.";
 "preference.title.silence_other_audio" = "Pause audio when game opens";
-"preference.detail.silence_other_audio" = "Enable to allow PojavLauncher to pause audio from other apps, such as Music, when launching the game.";
+"preference.detail.silence_other_audio" = "Enable to allow Amethyst to pause audio from other apps, such as Music, when launching the game.";
 "preference.title.silence_with_switch" = "Disable audio with silent switch";
 "preference.detail.silence_with_switch" = "Enable to disable audio when Silent Mode is on. Headphones and external speakers are not affected.";
+"preference.title.allow_microphone" = "Allow microphone input";
+"preference.detail.allow_microphone" = "Enable this only if you are using voice chat mod. Silent switch option will be ignored, and audio quality from other apps will be affected.";
 "preference.title.default_gamepad_ctrl" = "Controller configuration";
 "preference.title.hardware_hide" = "Hide controls when hardware is connected";
 "preference.detail.hardware_hide" = "Enable the behaviour of automatically disabling the on-screen control overlay when a mouse or game controller is connected.";
+"preference.title.recording_hide" = "Hide controls from screen recording";
+"preference.detail.recording_hide" = "Hides controls from screenshot and screen recording while they remain visible on the screen.";
 "preference.title.gesture_mouse" = "Mouse gestures";
 "preference.detail.gesture_mouse" = "Enables gestures, such as tap to place block, hold to break block, scrolling with 2 fingers";
 "preference.title.gesture_hotbar" = "Hotbar gestures";

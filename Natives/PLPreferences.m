@@ -21,9 +21,11 @@
             @"renderer": @"auto",
             @"resolution": @(100),
             @"max_framerate": @YES,
+            @"performance_hud": @NO,
             @"fullscreen_airplay": @YES,
             @"silence_other_audio": @NO,
-            @"silence_with_switch": @NO
+            @"silence_with_switch": @NO,
+            @"allow_microphone": @NO
         }.mutableCopy,
         @"control": @{
             @"default_ctrl": @"default.json",
@@ -31,6 +33,7 @@
             @"default_gamepad_ctrl": @"default.json",
             @"controller_type": @"xbox",
             @"hardware_hide": @YES,
+            @"recording_hide": @YES,
             @"gesture_mouse": @YES,
             @"gesture_hotbar": @YES,
             @"disable_haptics": @NO,
