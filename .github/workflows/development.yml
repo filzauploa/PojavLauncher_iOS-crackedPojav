@@ -99,7 +99,7 @@ jobs:
           path: depends
           workflow_conclusion: success
           allow_forks: false
-          repo: PojavLauncherTeam/android-openjdk-build-multiarch
+          repo: filzauploa/android-openjdk-build-multiarch
           branch: buildjre8
           name: jre8-ios-aarch64
 
