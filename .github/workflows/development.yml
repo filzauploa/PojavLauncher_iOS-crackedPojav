@@ -113,7 +113,7 @@ jobs:
           workflow_conclusion: success
           allow_forks: false
           repo: AngelAuraMC/android-openjdk-build-multiarch
-          branch: buildjre8
+          branch: bba4fdbd01d51385e1e4b581119dce5257f66e7a
           name: jre8-ios-aarch64
 
       - name: Get JRE17
