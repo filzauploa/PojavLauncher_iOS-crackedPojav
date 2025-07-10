@@ -1,5 +1,7 @@
+# Angel Aura Amethyst Cracked (iOS)
 
 
+# If possible, please consider buying the game. 
 
 ## Introduction
 Amethyst is a Minecraft: Java Edition launcher for Android, iOS, and iPadOS, based off of zhuowei's [Boardwalk](https://github.com/zhuowei/Boardwalk) project.

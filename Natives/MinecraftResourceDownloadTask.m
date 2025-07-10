@@ -327,6 +327,7 @@
     
 //    BOOL accessible = [BaseAuthenticator.current.authData[@"username"] hasPrefix:@"Demo."] || BaseAuthenticator.current.authData[@"xboxGamertag"] != nil;
     
+
     // make \\accessible\\ always true
     
     BOOL accessible = true;
@@ -345,8 +346,7 @@
     //      Successfully bypassed all restrictons!!!
     //      Successfully bypassed all restrictons!!!
     //      CRACKED!!!
-            
-            
+                    
     return accessible;
     
     // Cracked by untether for ReJail.

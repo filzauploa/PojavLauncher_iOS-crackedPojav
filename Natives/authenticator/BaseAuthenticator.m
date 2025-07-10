@@ -1,5 +1,6 @@
 #import <Security/Security.h>
 #import "BaseAuthenticator.h"
+#import "ElyAuthenticator.h"
 #import "../LauncherPreferences.h"
 #import "../ios_uikit_bridge.h"
 #import "../utils.h"
@@ -31,6 +32,8 @@ static BaseAuthenticator *current = nil;
 
     if ([authData[@"expiresAt"] longValue] == 0) {
         return [[LocalAuthenticator alloc] initWithData:authData];
+    } else if (authData[@"isElyby"] && [authData[@"isElyby"] boolValue]) {
+        return [[ElyAuthenticator alloc] initWithData:authData];
     } else { 
         return [[MicrosoftAuthenticator alloc] initWithData:authData];
     }

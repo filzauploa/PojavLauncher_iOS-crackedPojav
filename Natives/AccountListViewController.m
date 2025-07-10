@@ -1,6 +1,7 @@
 #import <AuthenticationServices/AuthenticationServices.h>
 
 #import "authenticator/BaseAuthenticator.h"
+#import "authenticator/ElyAuthenticator.h"
 #import "AccountListViewController.h"
 #import "AFNetworking.h"
 #import "LauncherPreferences.h"
@@ -68,6 +69,9 @@
         // Remove the prefix "Demo."
         cell.textLabel.text = [selected[@"username"] substringFromIndex:5];
         cell.detailTextLabel.text = localize(@"login.option.demo", nil);
+    } else if (selected[@"isElyby"] && [selected[@"isElyby"] boolValue]) {
+        // Показываем, что это аккаунт Ely.by
+        cell.detailTextLabel.text = @"Ely.by";
     } else if (selected[@"xboxGamertag"] == nil) {
         cell.detailTextLabel.text = localize(@"login.option.local", nil);
     } else {
@@ -146,6 +150,10 @@
         [self actionLoginMicrosoft:sender];
     }];
     [picker addAction:actionMicrosoft];
+    UIAlertAction *actionElyby = [UIAlertAction actionWithTitle:localize(@"login.option.elyby", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        [self actionLoginElyby:sender];
+    }];
+    [picker addAction:actionElyby];
     UIAlertAction *actionLocal = [UIAlertAction actionWithTitle:localize(@"login.option.local", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         [self actionLoginLocal:sender];
     }];
@@ -243,6 +251,50 @@
     }
 }
 
+- (void)actionLoginElyby:(UITableViewCell *)sender {
+    UIAlertController *controller = [UIAlertController alertControllerWithTitle:localize(@"login.elyby.title", nil) message:localize(@"login.elyby.message", nil) preferredStyle:UIAlertControllerStyleAlert];
+    
+    [controller addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = localize(@"login.elyby.username", nil);
+        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+        textField.borderStyle = UITextBorderStyleRoundedRect;
+    }];
+    
+    [controller addTextFieldWithConfigurationHandler:^(UITextField *textField) {
+        textField.placeholder = localize(@"login.elyby.password", nil);
+        textField.clearButtonMode = UITextFieldViewModeWhileEditing;
+        textField.borderStyle = UITextBorderStyleRoundedRect;
+        textField.secureTextEntry = YES;
+    }];
+    
+    [controller addAction:[UIAlertAction actionWithTitle:localize(@"OK", nil) style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSArray *textFields = controller.textFields;
+        UITextField *usernameField = textFields[0];
+        UITextField *passwordField = textFields[1];
+        
+        if (usernameField.text.length == 0 || passwordField.text.length == 0) {
+            controller.message = localize(@"login.elyby.error.empty", nil);
+            [self presentViewController:controller animated:YES completion:nil];
+            return;
+        }
+        
+        NSString *credentials = [NSString stringWithFormat:@"%@:%@", usernameField.text, passwordField.text];
+        
+        self.modalInPresentation = YES;
+        self.tableView.userInteractionEnabled = NO;
+        [self addActivityIndicatorTo:sender];
+        
+        id callback = ^(id status, BOOL success) {
+            [self callbackElybyAuth:status success:success forCell:sender];
+        };
+        
+        [[[ElyAuthenticator alloc] initWithInput:credentials] loginWithCallback:callback];
+    }]];
+    
+    [controller addAction:[UIAlertAction actionWithTitle:localize(@"Cancel", nil) style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:controller animated:YES completion:nil];
+}
+
 - (void)addActivityIndicatorTo:(UITableViewCell *)cell {
     UIActivityIndicatorViewStyle indicatorStyle = UIActivityIndicatorViewStyleMedium;
     UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:indicatorStyle];
@@ -276,6 +328,23 @@
         [self removeActivityIndicatorFrom:cell];
         [self dismissViewControllerAnimated:YES completion:nil];
     }
+}
+
+- (void)callbackElybyAuth:(id)status success:(BOOL)success forCell:(UITableViewCell *)cell {
+    self.modalInPresentation = NO;
+    self.tableView.userInteractionEnabled = YES;
+    [self removeActivityIndicatorFrom:cell];
+    
+    if (!success) {
+        showDialog(localize(@"login.elyby.error", nil), status);
+        return;
+    }
+    
+    if (self.whenItemSelected) {
+        self.whenItemSelected();
+    }
+    
+    [self dismissViewControllerAnimated:YES completion:nil];
 }
 
 #pragma mark - UIPopoverPresentationControllerDelegate
